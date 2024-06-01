@@ -27,9 +27,6 @@ const items = [
 ];
 
 const MainLayout = ({ children }) => {
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
   return (
     <Layout>
       <Sider
@@ -118,16 +115,7 @@ const MainLayout = ({ children }) => {
             margin: "24px 16px 0",
           }}
         >
-          <div
-            style={{
-              padding: 24,
-              height: "100%",
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            {children}
-          </div>
+          {children}
         </Content>
       </Layout>
     </Layout>
