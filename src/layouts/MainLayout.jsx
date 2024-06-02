@@ -7,6 +7,7 @@ import ChatIcon from "../assets/icons/ChatIcon";
 import DashboardIcon from "../assets/icons/DashboardIcon";
 import FlightIcon from "../assets/icons/FlightIcon";
 import { Link } from "react-router-dom";
+import PriceIcon from "../assets/icons/PriceIcon";
 
 const items = [
   {
@@ -21,6 +22,11 @@ const items = [
   },
   {
     key: "3",
+    icon: <PriceIcon />,
+    label: <Link to="/price">Price Management</Link>,
+  },
+  {
+    key: "4",
     icon: <ChatIcon />,
     label: <Link to="/chat">Chat</Link>,
   },
@@ -56,6 +62,7 @@ const MainLayout = ({ children }) => {
           </svg>
 
           <svg
+            height="2.6rem"
             viewBox="0 0 111 37"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"

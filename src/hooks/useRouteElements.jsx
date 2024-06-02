@@ -4,6 +4,7 @@ import OverviewPage from "../modules/overview/pages/OverviewPage";
 import MainLayout from "../layouts/MainLayout";
 import ChatPage from "../modules/chat/pages/ChatPage";
 import FlightsPage from "../modules/flights/pages/FlightsPage";
+import PricePage from "../modules/price/pages/PricePage";
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -20,6 +21,14 @@ export default function useRouteElements() {
       element: (
         <MainLayout>
           <FlightsPage />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/price",
+      element: (
+        <MainLayout>
+          <PricePage />
         </MainLayout>
       ),
     },
