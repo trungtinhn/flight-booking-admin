@@ -1,0 +1,15 @@
+.search-input {
+  width: 400px;
+}
+
+.ant-btn-primary.ant-input-search-button {
+  background-color: #8dd3bb;
+}
+
+.ant-input-outlined:hover {
+  border-color: #8dd3bb !important;
+}
+
+.ant-input-outlined:focus {
+  border-color: #8dd3bb !important;
+}

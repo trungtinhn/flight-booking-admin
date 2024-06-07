@@ -11,6 +11,11 @@ import {
   message,
   Upload,
   Divider,
+  Form,
+  Radio,
+  Select,
+  TreeSelect,
+  DatePicker,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 const { Column, ColumnGroup } = Table;
@@ -96,7 +101,56 @@ const FlightsPage = () => {
               <Button icon={<UploadOutlined />}>Add by excel file</Button>
             </Upload>
             <Divider plain>Or</Divider>
-            <p>some contents...</p>
+            <Form
+              labelCol={{ span: 4 }}
+              wrapperCol={{ span: 14 }}
+              layout="horizontal"
+              size="middle"
+              style={{ width: "100%" }}
+            >
+              <Form.Item label="Name">
+                <Input />
+              </Form.Item>
+              <Form.Item label="Airlines">
+                <Select>
+                  <Select.Option value="vietname-airline">
+                    Vietnam Airline
+                  </Select.Option>
+                  <Select.Option value="vietject-air">
+                    Vietjet Air
+                  </Select.Option>
+                  <Select.Option value="bambo">Bambo Airway</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item label="From">
+                <Select>
+                  <Select.Option value="hcm">Ho Chi Minh</Select.Option>
+                  <Select.Option value="hn"> Ha Noi</Select.Option>
+                  <Select.Option value="dn">Da Nang</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item label="To">
+                <Select>
+                  <Select.Option value="hcm">Ho Chi Minh</Select.Option>
+                  <Select.Option value="hn"> Ha Noi</Select.Option>
+                  <Select.Option value="dn">Da Nang</Select.Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item label="Start Day">
+                <DatePicker />
+              </Form.Item>
+              <Form.Item label="End Day">
+                <DatePicker />
+              </Form.Item>
+              <Form.Item label="Status">
+                <Select>
+                  <Select.Option value="active">Active</Select.Option>
+                  <Select.Option value="cancelled"> Cancelled</Select.Option>
+                  <Select.Option value="delay">Delayed</Select.Option>
+                </Select>
+              </Form.Item>
+            </Form>
           </Flex>
         </Modal>
       </Flex>
