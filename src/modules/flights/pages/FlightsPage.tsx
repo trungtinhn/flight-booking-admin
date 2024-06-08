@@ -137,11 +137,18 @@ const FlightsPage = () => {
                 </Select>
               </Form.Item>
 
-              <Form.Item label="Start Day">
-                <DatePicker />
+              <Form.Item label="Departure Day">
+                <DatePicker showTime />
               </Form.Item>
-              <Form.Item label="End Day">
-                <DatePicker />
+              <Form.Item label="Arrival Day">
+                <DatePicker showTime />
+              </Form.Item>
+              <Form.Item label="Plane">
+                <Select>
+                  <Select.Option value="1">1</Select.Option>
+                  <Select.Option value="2">2</Select.Option>
+                  <Select.Option value="3">3</Select.Option>
+                </Select>
               </Form.Item>
               <Form.Item label="Status">
                 <Select>
