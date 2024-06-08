@@ -6,6 +6,7 @@ import ChatPage from "../modules/chat/pages/ChatPage";
 import FlightsPage from "../modules/flights/pages/FlightsPage";
 import PricePage from "../modules/price/pages/PricePage";
 import AirlinePage from "../modules/airlines/pages/AirlinePage";
+import PlanePage from "../modules/planes/pages/PlanePage";
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -22,6 +23,14 @@ export default function useRouteElements() {
       element: (
         <MainLayout>
           <AirlinePage />
+        </MainLayout>
+      ),
+    },
+    {
+      path: "/planes",
+      element: (
+        <MainLayout>
+          <PlanePage />
         </MainLayout>
       ),
     },

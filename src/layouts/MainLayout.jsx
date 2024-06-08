@@ -23,15 +23,20 @@ const items = [
   {
     key: "3",
     icon: <FlightIcon />,
-    label: <Link to="/flights">Flights Management</Link>,
+    label: <Link to="/planes">Planes Management</Link>,
   },
   {
     key: "4",
+    icon: <FlightIcon />,
+    label: <Link to="/flights">Flights Management</Link>,
+  },
+  {
+    key: "5",
     icon: <PriceIcon />,
     label: <Link to="/price">Price Management</Link>,
   },
   {
-    key: "5",
+    key: "6",
     icon: <ChatIcon />,
     label: <Link to="/chat">Chat</Link>,
   },

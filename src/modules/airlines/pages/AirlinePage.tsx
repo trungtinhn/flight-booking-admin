@@ -190,7 +190,14 @@ const AirlinePage = () => {
             }}
           />
           <Column title="Name" dataIndex="airlineName" key="airlineName" />
-
+          {/* <Column
+            title="Number of Planes"
+            key="planes"
+            render={(_, record) => {
+              console.log(record);
+              return <Typography.Text>{record.planes.length}</Typography.Text>;
+            }}
+          /> */}
           <Column
             title="Action"
             key="action"

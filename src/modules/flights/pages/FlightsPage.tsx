@@ -102,15 +102,13 @@ const FlightsPage = () => {
             </Upload>
             <Divider plain>Or</Divider>
             <Form
-              labelCol={{ span: 4 }}
-              wrapperCol={{ span: 14 }}
+              labelCol={{ span: 8 }}
+              wrapperCol={{ span: 10 }}
               layout="horizontal"
               size="middle"
               style={{ width: "100%" }}
+              labelAlign="left"
             >
-              <Form.Item label="Name">
-                <Input />
-              </Form.Item>
               <Form.Item label="Airlines">
                 <Select>
                   <Select.Option value="vietname-airline">
