@@ -34,7 +34,7 @@ const PricesPage = () => {
 
     const fetchPrices = async () => {
         try {
-            const response = await axios.get("http://localhost:7050/regulations/getRegulation");
+            const response = await axios.get("https://flightbookingbe-production.up.railway.app/regulations/getRegulation");
             const { firstClassPrice, businessPrice, economyPrice } = response.data;
 
             setPrices([
@@ -59,13 +59,13 @@ const PricesPage = () => {
 
             switch (classType) {
                 case "First Class":
-                    updateUrl = "http://localhost:7050/regulations/updateFirstClassPrice";
+                    updateUrl = "https://flightbookingbe-production.up.railway.app/regulations/updateFirstClassPrice";
                     break;
                 case "Business":
-                    updateUrl = "http://localhost:7050/regulations/updateBusinessPrice";
+                    updateUrl = "https://flightbookingbe-production.up.railway.app/regulations/updateBusinessPrice";
                     break;
                 case "Economy":
-                    updateUrl = "http://localhost:7050/regulations/updateEconomyPrice";
+                    updateUrl = "https://flightbookingbe-production.up.railway.app/regulations/updateEconomyPrice";
                     break;
                 default:
                     break;
