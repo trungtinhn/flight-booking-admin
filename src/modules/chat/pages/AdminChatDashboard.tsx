@@ -1,43 +1,75 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import styled from 'styled-components';
 
-const DashboardContainer = styled.div`
+interface Message {
+    content: string;
+    senderId: number;
+    receiverId: number | null;
+    createdAt: string;
+}
+
+interface Session {
+    id: number;
+    customerId: number;
+    status: string;
+    latestMessage: string;
+    customerAvatar: string; // Add customerAvatar field
+}
+
+const ChatContainer = styled.div`
   display: flex;
   height: 100vh;
 `;
 
 const Sidebar = styled.div`
-  width: 300px;
+  flex: 1;
   border-right: 1px solid #ccc;
-  padding: 10px;
-  background-color: #f4f4f6;
+  overflow-y: auto;
+  padding: 20px;
 `;
 
-const ChatContainer = styled.div`
-  flex: 1;
+const ChatArea = styled.div`
+  flex: 2;
+  padding: 20px;
   display: flex;
   flex-direction: column;
 `;
 
 const ChatHeader = styled.div`
-  background-color: #28B446;
-  padding: 10px;
-  color: white;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 `;
 
 const ChatBody = styled.div`
   flex: 1;
-  padding: 10px;
-  overflow-y: scroll;
-  background-color: #f9f9f9;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  margin-bottom: 10px;
 `;
 
-const ChatMessage = styled.div<{ isAdmin: boolean }>`
-  align-self: ${props => (props.isAdmin ? 'flex-end' : 'flex-start')};
+const ChatInputContainer = styled.div`
+  display: flex;
+`;
+
+const ChatInput = styled.input`
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+`;
+
+const ChatButton = styled.button`
+  padding: 10px 20px;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  margin-left: 10px;
+`;
+
+const ChatMessage = styled.div<{ isCustomer: boolean }>`
+  align-self: ${props => (props.isCustomer ? 'flex-end' : 'flex-start')};
   color: black;
   margin: 5px 0;
   display: inline-block;
@@ -47,52 +79,26 @@ const ChatMessage = styled.div<{ isAdmin: boolean }>`
   max-width: 70%;
 `;
 
-const ChatInputContainer = styled.div`
+const MessageTimestamp = styled.div`
+  font-size: 0.8em;
+  color: #888;
+  margin-top: 4px;
+`;
+
+const CustomerButton = styled.button`
   display: flex;
+  align-items: center;
+  width: 100%;
   padding: 10px;
-  border-top: 1px solid #ccc;
-  background-color: #f9f9f9;
-`;
-
-const ChatInput = styled.input`
-  flex: 1;
-  padding: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-`;
-
-const ChatButton = styled.button`
-  margin-left: 10px;
-  padding: 5px 10px;
   border: none;
-  background-color: #28B446;
-  color: white;
-  border-radius: 5px;
+  background: #f9f9f9;
   cursor: pointer;
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const SupportButton = styled.button`
-  padding: 5px 10px;
-  border: none;
-  background-color: #28B446;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-`;
-
-const Header = styled.h2`
-  color: black;
-`;
-
-const CustomerListItem = styled.div`
   margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  color: black;
+  text-align: left;
+
+  &:hover {
+    background: #e9e9e9;
+  }
 `;
 
 const Avatar = styled.img`
@@ -102,42 +108,22 @@ const Avatar = styled.img`
   margin-right: 10px;
 `;
 
-const MessageTimestamp = styled.div`
-  font-size: 0.8em;
-  color: #888;
-  margin-top: 4px;
-`;
-
-interface Message {
-    content: string;
-    senderId: number;
-    receiverId?: number;
-    type?: string;
-    createdAt: string;
-}
-
-interface UserWithLatestMessage {
-    id: number;
-    fullName: string;
-    avatarUrl: string;
-    latestMessage: string;
-}
-
-const AdminChatDashboard: React.FC = () => {
-    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmcxMjMiLCJpYXQiOjE3MTgxODEyNDEsImV4cCI6MTcxODE5NTY0MX0.jtWj0o61riFvmxRdvhko9rhYmHnNwfvqV8embrDHS90"; // Token của admin
-    const [activeChat, setActiveChat] = useState<number | null>(null);
-    const [customers, setCustomers] = useState<UserWithLatestMessage[]>([]);
+const AdminChat: React.FC = () => {
     const [messages, setMessages] = useState<Message[]>([]);
-    const [newMessage, setNewMessage] = useState('');
-    const [isSending, setIsSending] = useState(false);
+    const [message, setMessage] = useState<string>('');
     const [adminId, setAdminId] = useState<number | null>(null);
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
+    const [currentCustomerName, setCurrentCustomerName] = useState<string>('');
+    const [currentCustomerAvatar, setCurrentCustomerAvatar] = useState<string>('');
     const socketRef = useRef<WebSocket | null>(null);
-    const chatBodyRef = useRef<HTMLDivElement | null>(null);
+
+    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmcxMjMiLCJpYXQiOjE3MTgxOTYyMzQsImV4cCI6MTcxODIxMDYzNH0.wJlm4X4G008xe-9YMFPPPkHLxV7KgrcdyLYv6MSf6X4"; // Token của admin
 
     useEffect(() => {
         const fetchAdminId = async () => {
             try {
-                const response = await fetch(`https://flightbookingbe-production.up.railway.app/users/token?token=${token}`);
+                const response = await fetch(`http://localhost:7050/users/token?token=${token}`);
                 if (response.ok) {
                     const data = await response.json();
                     setAdminId(data.id);
@@ -153,59 +139,38 @@ const AdminChatDashboard: React.FC = () => {
     }, [token]);
 
     useEffect(() => {
-        const fetchCustomersWithLatestMessages = async () => {
+        const fetchSessions = async () => {
             try {
-                const response = await fetch('https://flightbookingbe-production.up.railway.app/message/users-with-latest-messages');
+                const response = await fetch(`http://localhost:7050/message/sessions`);
                 if (response.ok) {
-                    const data: UserWithLatestMessage[] = await response.json();
-                    setCustomers(data);
+                    const data = await response.json();
+                    setSessions(data);
                 } else {
-                    console.error('Failed to fetch customers with latest messages');
+                    console.error('Failed to fetch sessions');
                 }
             } catch (error) {
-                console.error('Error fetching customers with latest messages', error);
+                console.error('Error fetching sessions', error);
             }
         };
 
-        fetchCustomersWithLatestMessages();
+        fetchSessions();
     }, []);
 
     useEffect(() => {
         const connectWebSocket = () => {
-            socketRef.current = new WebSocket('wss://flightbookingbe-production.up.railway.app/ws');
+            socketRef.current = new WebSocket('ws://localhost:7050/ws');
 
             socketRef.current.onopen = () => {
-                console.log('WebSocket connected');
-                if (socketRef.current && adminId) {
-                    socketRef.current.send(JSON.stringify({ type: 'JOIN_ADMIN', senderId: adminId }));
-                }
+                console.log('WebSocket connection established');
             };
 
             socketRef.current.onmessage = (event) => {
-                const message: Message = JSON.parse(event.data);
-                setMessages((prevMessages) => {
-                    const existingMessage = prevMessages.find(msg => msg.content === message.content && msg.senderId === message.senderId);
-                    if (!existingMessage) {
-                        return [...prevMessages, message];
-                    }
-                    return prevMessages;
-                });
-
-                if (message.senderId !== adminId) {
-                    setCustomers((prev) => {
-                        const existingCustomer = prev.find((c) => c.id === message.senderId);
-                        if (existingCustomer) {
-                            existingCustomer.latestMessage = message.content;
-                            return [...prev];
-                        }
-                        return [...prev, { id: message.senderId, fullName: `Customer ${message.senderId}`, avatarUrl: "/path/to/default/avatar.png", latestMessage: message.content }];
-                    });
-                }
+                const newMessage: Message = JSON.parse(event.data);
+                setMessages((prevMessages) => [...prevMessages, newMessage]);
             };
 
             socketRef.current.onclose = () => {
-                console.log('WebSocket disconnected, attempting to reconnect...');
-                setTimeout(connectWebSocket, 5000);
+                console.log('WebSocket connection closed');
             };
 
             socketRef.current.onerror = (error) => {
@@ -213,143 +178,126 @@ const AdminChatDashboard: React.FC = () => {
             };
         };
 
-        if (adminId) {
-            connectWebSocket();
-        }
+        connectWebSocket();
 
         return () => {
-            socketRef.current?.close();
-        };
-    }, [adminId]);
-
-    useEffect(() => {
-        if (chatBodyRef.current) {
-            chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
-        }
-    }, [messages]);
-
-    const handleSendMessage = () => {
-        if (newMessage.trim() && socketRef.current?.readyState === WebSocket.OPEN && adminId && activeChat) {
-            const message: Message = {
-                content: newMessage,
-                senderId: adminId,
-                receiverId: activeChat,
-                createdAt: new Date().toISOString(),
-            };
-            setIsSending(true);
-            socketRef.current?.send(JSON.stringify(message));
-            setMessages((prevMessages) => [...prevMessages, message]);
-            setNewMessage('');
-            setTimeout(() => setIsSending(false), 1000);
-        } else {
-            console.log('WebSocket is not open, no active chat, or message is empty');
-        }
-    };
-
-    const handleSupportCustomer = (customerId: number) => {
-        setActiveChat(customerId);
-
-        fetch(`https://flightbookingbe-production.up.railway.app/message/support/start/${adminId}/${customerId}`, {
-            method: 'POST',
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log('Support started', data);
-            });
-
-        fetchMessagesForCustomer(customerId);
-    };
-
-    const fetchMessagesForCustomer = async (customerId: number) => {
-        try {
-            const response = await fetch(`https://flightbookingbe-production.up.railway.app/messages/${customerId}`);
-            if (response.ok) {
-                const data: Message[] = await response.json();
-                setMessages(data);
-            } else {
-                console.error('Failed to fetch messages for customer');
+            if (socketRef.current) {
+                socketRef.current.close();
             }
-        } catch (error) {
-            console.error('Error fetching messages for customer', error);
-        }
+        };
+    }, []);
+
+    const handleSupport = (sessionId: number, customerId: number) => {
+        setCurrentSessionId(sessionId);
+        // Fetch customer's name and latest message
+        const customer = sessions.find(session => session.id === sessionId);
+        setCurrentCustomerName(`Customer ${customerId}`);
+        setCurrentCustomerAvatar(customer?.customerAvatar || '');
+        // Update session status to active
+        fetch(`http://localhost:7050/message/startSupport?sessionId=${sessionId}&adminId=${adminId}`, {
+            method: 'POST'
+        }).then(response => response.json())
+            .then(data => {
+                setMessages(data.messages);
+                // Send a message to customer to notify the admin is supporting
+                if (socketRef.current) {
+                    const notificationMessage: Message = {
+                        content: 'Nhân viên đang hỗ trợ bạn...',
+                        senderId: adminId!,
+                        receiverId: customerId,
+                        createdAt: new Date().toISOString(),
+                    };
+                    socketRef.current.send(JSON.stringify(notificationMessage));
+                }
+            }).catch(error => {
+                console.error('Error updating session status', error);
+            });
     };
 
-    const handleEndSupport = () => {
-        if (activeChat !== null) {
-            fetch(`https://flightbookingbe-production.up.railway.app/message/support/end/${adminId}/${activeChat}`, {
+    const endSupport = () => {
+        if (currentSessionId) {
+            fetch(`http://localhost:7050/message/endSession`, {
                 method: 'POST',
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log('Support ended', data);
-                    setActiveChat(null);
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: currentSessionId })
+            }).then(response => response.json())
+                .then(() => {
+                    setCurrentSessionId(null);
                     setMessages([]);
+                }).catch(error => {
+                    console.error('Error ending session', error);
                 });
         }
     };
 
-    const handleKeyPress = (event: React.KeyboardEvent) => {
-        if (event.key === 'Enter' && !isSending) {
-            handleSendMessage();
+    const sendMessage = () => {
+        if (adminId !== null && currentSessionId !== null && socketRef.current) {
+            const messageContent: Message = {
+                content: message,
+                senderId: adminId,
+                receiverId: currentSessionId,
+                createdAt: new Date().toISOString(),
+            };
+
+            socketRef.current.send(JSON.stringify(messageContent));
+            setMessage('');
+        }
+    };
+
+    const handleKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') {
+            sendMessage();
         }
     };
 
     return (
-        <DashboardContainer>
+        <ChatContainer>
             <Sidebar>
-                <Header>Customer Support</Header>
-                {customers.map((customer) => (
-                    <CustomerListItem key={customer.id}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <Avatar src={customer.avatarUrl || '/path/to/default/avatar.png'} alt={customer.fullName} />
-                            <div>
-                                <div>{customer.fullName}</div>
-                                <div>{customer.latestMessage}</div>
-                            </div>
+                <h2>Customer Support</h2>
+                {sessions.filter(session => session.status === 'pending').map(session => (
+                    <CustomerButton key={session.id} onClick={() => handleSupport(session.id, session.customerId)}>
+                        <Avatar src={session.customerAvatar} alt="Avatar" />
+                        <div>
+                            <div>Customer {session.customerId}</div>
+                            <div>{session.latestMessage}</div>
                         </div>
-                        <SupportButton onClick={() => handleSupportCustomer(customer.id)}>Hỗ trợ</SupportButton>
-                    </CustomerListItem>
+                    </CustomerButton>
+                ))}
+                <h2>Waiting on Close</h2>
+                {sessions.filter(session => session.status === 'closed').map(session => (
+                    <CustomerButton key={session.id}>
+                        <Avatar src={session.customerAvatar} alt="Avatar" />
+                        <div>Customer {session.customerId}</div>
+                    </CustomerButton>
                 ))}
             </Sidebar>
-            <ChatContainer>
-                {activeChat !== null ? (
-                    <>
-                        <ChatHeader>
-                            <div>Admin - Đang hỗ trợ Customer {activeChat}</div>
-                            <SupportButton onClick={handleEndSupport}>Kết thúc hỗ trợ</SupportButton>
-                        </ChatHeader>
-                        <ChatBody ref={chatBodyRef}>
-                            {messages
-                                .filter(
-                                    (msg) =>
-                                        msg.senderId === activeChat ||
-                                        msg.receiverId === activeChat ||
-                                        msg.senderId === adminId ||
-                                        msg.receiverId === adminId
-                                )
-                                .map((msg, index) => (
-                                    <ChatMessage key={index} isAdmin={msg.senderId === adminId}>
-                                        <span>{msg.content}</span>
-                                        <MessageTimestamp>{new Date(msg.createdAt).toLocaleString()}</MessageTimestamp>
-                                    </ChatMessage>
-                                ))}
-                        </ChatBody>
-                        <ChatInputContainer>
-                            <ChatInput
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Nhập nội dung..."
-                            />
-                            <ChatButton onClick={handleSendMessage} disabled={isSending}>Gửi</ChatButton>
-                        </ChatInputContainer>
-                    </>
-                ) : (
-                    <div>Chọn khách hàng để hỗ trợ</div>
-                )}
-            </ChatContainer>
-        </DashboardContainer>
+            <ChatArea>
+                <ChatHeader>
+                    <h3>{currentCustomerName}</h3>
+                    {currentSessionId && <ChatButton onClick={endSupport}>Kết thúc hỗ trợ</ChatButton>}
+                </ChatHeader>
+                <ChatBody>
+                    {messages.map((msg, index) => (
+                        <ChatMessage key={index} isCustomer={msg.senderId === adminId}>
+                            <div>{msg.content}</div>
+                            <MessageTimestamp>{msg.createdAt}</MessageTimestamp>
+                        </ChatMessage>
+                    ))}
+                </ChatBody>
+                <ChatInputContainer>
+                    <ChatInput
+                        type="text"
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                    />
+                    <ChatButton onClick={sendMessage}>Send</ChatButton>
+                </ChatInputContainer>
+            </ChatArea>
+        </ChatContainer>
     );
 };
 
-export default AdminChatDashboard;
+export default AdminChat;

@@ -3,10 +3,11 @@ import OverviewPage from "../modules/overview/pages/OverviewPage";
 
 import MainLayout from "../layouts/MainLayout";
 import FlightsPage from "../modules/flights/pages/FlightsPage";
-import PricePage from "../modules/price/pages/PricePage";
+import PricePage from "../modules/price/pages/PricesPage";
 import AirlinePage from "../modules/airlines/pages/AirlinePage";
 import PlanePage from "../modules/planes/pages/PlanePage";
 import AdminChatDashboard from "../modules/chat/pages/AdminChatDashboard";
+
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -58,6 +59,15 @@ export default function useRouteElements() {
         </MainLayout>
       ),
     },
+    // {
+    //   path: "/voucher",
+    //   element: (
+
+    //     <MainLayout>
+    //       <VoucherPage />
+    //     </MainLayout>
+    //   )
+    // },
     {
       path: "*",
       element: <h1>Not Found</h1>,

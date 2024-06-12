@@ -1,0 +1,79 @@
+.vouchers-page h2 {
+    /* Style the title */
+    margin-bottom: 20px;
+}
+
+.vouchers-page button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.vouchers-page button:hover {
+    /* Hover effect */
+    background-color: #ddd;
+}
+
+.vouchers-page h2 {
+    /* Style the title */
+    margin-bottom: 20px;
+}
+
+.vouchers-page button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.vouchers-page button:hover {
+    /* Hover effect */
+    background-color: #ddd;
+}
+
+.vouchers-page .ant-modal-content {
+    /* Style the modal content */
+    width: 600px;
+    /* Adjust width as needed */
+    padding: 20px;
+}
+
+.vouchers-page .ant-form-item {
+    /* Style form items */
+    margin-bottom: 15px;
+}
+
+.vouchers-page .ant-form-item-label {
+    /* Style form labels */
+    font-weight: bold;
+}
+
+.vouchers-page .ant-input {
+    /* Style input fields */
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.vouchers-page .ant-select {
+    /* Style select dropdown */
+    width: 100%;
+}
+
+.vouchers-page .ant-upload-button {
+    /* Style upload button */
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.vouchers-page .ant-upload-button:hover {
+    /* Hover effect */
+    background-color: #ddd;
+}
