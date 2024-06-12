@@ -23,35 +23,6 @@ const { Search } = Input;
 import "./FlightsPage.css";
 import axios from "axios";
 
-// const data = [
-//   {
-//     key: "1",
-//     firstName: "Vietnam Airlines",
-//     origin: "Ho Chi Minh",
-//     destination: "Ha Noi",
-//     duration: 2,
-//     tags: ["Active"],
-//   },
-//   {
-//     key: "2",
-//     firstName: "Vietjet Air",
-//     origin: "Ho Chi Minh",
-//     destination: "Ha Noi",
-//     duration: 4,
-
-//     tags: ["Cancelled"],
-//   },
-//   {
-//     key: "3",
-//     firstName: "Bamboo Airways",
-//     origin: "Ha Noi",
-//     destination: "My",
-//     duration: 2,
-
-//     tags: ["Active"],
-//   },
-// ];
-
 const uploadProps = {
   name: "file",
   headers: {
@@ -76,6 +47,22 @@ const FlightsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [airports, setAirports] = useState([]);
+
+  const fetchAirportData = async () => {
+    try {
+      const response = await axios.get(
+        "https://flightbooking-be.onrender.com/airports"
+      );
+
+      setAirports(response.data);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
       const response = await axios.get(
@@ -92,6 +79,7 @@ const FlightsPage = () => {
 
   useEffect(() => {
     fetchData();
+    fetchAirportData();
   }, []);
 
   return (
@@ -131,29 +119,22 @@ const FlightsPage = () => {
               style={{ width: "100%" }}
               labelAlign="left"
             >
-              <Form.Item label="Airlines">
-                <Select>
-                  <Select.Option value="vietname-airline">
-                    Vietnam Airline
-                  </Select.Option>
-                  <Select.Option value="vietject-air">
-                    Vietjet Air
-                  </Select.Option>
-                  <Select.Option value="bambo">Bambo Airway</Select.Option>
-                </Select>
-              </Form.Item>
               <Form.Item label="From">
                 <Select>
-                  <Select.Option value="hcm">Ho Chi Minh</Select.Option>
-                  <Select.Option value="hn"> Ha Noi</Select.Option>
-                  <Select.Option value="dn">Da Nang</Select.Option>
+                  {airports.map((airport) => (
+                    <Select.Option key={airport.id} value={airport.id}>
+                      {airport.airportName}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
               <Form.Item label="To">
                 <Select>
-                  <Select.Option value="hcm">Ho Chi Minh</Select.Option>
-                  <Select.Option value="hn"> Ha Noi</Select.Option>
-                  <Select.Option value="dn">Da Nang</Select.Option>
+                  {airports.map((airport) => (
+                    <Select.Option key={airport.id} value={airport.id}>
+                      {airport.airportName}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
 
@@ -172,9 +153,9 @@ const FlightsPage = () => {
               </Form.Item>
               <Form.Item label="Status">
                 <Select>
-                  <Select.Option value="active">Active</Select.Option>
-                  <Select.Option value="cancelled"> Cancelled</Select.Option>
-                  <Select.Option value="delay">Delayed</Select.Option>
+                  <Select.Option value="scheduled">SCHEDULED</Select.Option>
+                  <Select.Option value="cancelled"> CANCELLED</Select.Option>
+                  <Select.Option value="delay">DELAYED</Select.Option>
                 </Select>
               </Form.Item>
             </Form>
@@ -197,8 +178,32 @@ const FlightsPage = () => {
           title="Departure Day"
           dataIndex="departureDate"
           key="departureDate"
+          render={(item) => {
+            const date = new Date(item);
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+            return <>{<span key={item}>{formattedDate}</span>}</>;
+          }}
         />
-        <Column title="Arrival Day" dataIndex="arrivalDate" key="arrivalDate" />
+        <Column
+          title="Arrival Day"
+          dataIndex="arrivalDate"
+          key="arrivalDate"
+          render={(item) => {
+            const date = new Date(item);
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+            return <>{<span key={item}>{formattedDate}</span>}</>;
+          }}
+        />
         <Column title="Duration" dataIndex="duration" key="duration" />
         <Column title="Plane" dataIndex="planeId" key="planeId" />
         <Column

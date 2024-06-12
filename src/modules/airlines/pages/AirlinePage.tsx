@@ -103,9 +103,11 @@ const AirlinePage = () => {
       const response = await axios.get(
         "https://flightbooking-be.onrender.com/airlines"
       );
-      console.log(response.data[0].logoUrl);
+
+      console.log(response.data);
       setData(response.data);
     } catch (error) {
+      console.log(error);
       setError(error);
     } finally {
       setLoading(false);
