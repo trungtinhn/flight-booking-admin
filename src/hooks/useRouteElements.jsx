@@ -2,11 +2,13 @@ import { useRoutes } from "react-router-dom";
 import OverviewPage from "../modules/overview/pages/OverviewPage";
 
 import MainLayout from "../layouts/MainLayout";
-import ChatPage from "../modules/chat/pages/ChatPage";
 import FlightsPage from "../modules/flights/pages/FlightsPage";
-import PricePage from "../modules/price/pages/PricePage";
+import PricePage from "../modules/price/pages/PricesPage";
 import AirlinePage from "../modules/airlines/pages/AirlinePage";
 import PlanePage from "../modules/planes/pages/PlanePage";
+import AdminChatDashboard from "../modules/chat/pages/AdminChatDashboard";
+import VoucherPage from "../modules/vouchers/VoucherPage";
+
 
 export default function useRouteElements() {
   const routeElements = useRoutes([
@@ -54,9 +56,17 @@ export default function useRouteElements() {
       path: "/chat",
       element: (
         <MainLayout>
-          <ChatPage />
+          <AdminChatDashboard />
         </MainLayout>
       ),
+    },
+    {
+      path: "/voucher",
+      element: (
+        <MainLayout>
+          <VoucherPage />
+        </MainLayout>
+      )
     },
     {
       path: "*",
