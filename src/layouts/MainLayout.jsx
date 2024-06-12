@@ -8,6 +8,8 @@ import DashboardIcon from "../assets/icons/DashboardIcon";
 import FlightIcon from "../assets/icons/FlightIcon";
 import { Link } from "react-router-dom";
 import PriceIcon from "../assets/icons/PriceIcon";
+import VoucherPage from "../modules/vouchers/VoucherPage";
+import VoucherIcon from "../assets/icons/VoucherIcon";
 
 const items = [
   {
@@ -40,6 +42,11 @@ const items = [
     icon: <ChatIcon />,
     label: <Link to="/chat">Chat</Link>,
   },
+  {
+    key: "7",
+    icon: <VoucherIcon />,
+    label: <Link to="/voucher">Voucher Management</Link>,
+  }
 ];
 
 const MainLayout = ({ children }) => {
