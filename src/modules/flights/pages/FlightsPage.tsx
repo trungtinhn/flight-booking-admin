@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Flex,
@@ -21,35 +21,36 @@ import { UploadOutlined } from "@ant-design/icons";
 const { Column, ColumnGroup } = Table;
 const { Search } = Input;
 import "./FlightsPage.css";
+import axios from "axios";
 
-const data = [
-  {
-    key: "1",
-    firstName: "Vietnam Airlines",
-    origin: "Ho Chi Minh",
-    destination: "Ha Noi",
-    duration: 2,
-    tags: ["Active"],
-  },
-  {
-    key: "2",
-    firstName: "Vietjet Air",
-    origin: "Ho Chi Minh",
-    destination: "Ha Noi",
-    duration: 4,
+// const data = [
+//   {
+//     key: "1",
+//     firstName: "Vietnam Airlines",
+//     origin: "Ho Chi Minh",
+//     destination: "Ha Noi",
+//     duration: 2,
+//     tags: ["Active"],
+//   },
+//   {
+//     key: "2",
+//     firstName: "Vietjet Air",
+//     origin: "Ho Chi Minh",
+//     destination: "Ha Noi",
+//     duration: 4,
 
-    tags: ["Cancelled"],
-  },
-  {
-    key: "3",
-    firstName: "Bamboo Airways",
-    origin: "Ha Noi",
-    destination: "My",
-    duration: 2,
+//     tags: ["Cancelled"],
+//   },
+//   {
+//     key: "3",
+//     firstName: "Bamboo Airways",
+//     origin: "Ha Noi",
+//     destination: "My",
+//     duration: 2,
 
-    tags: ["Active"],
-  },
-];
+//     tags: ["Active"],
+//   },
+// ];
 
 const uploadProps = {
   name: "file",
@@ -71,6 +72,27 @@ const uploadProps = {
 const FlightsPage = () => {
   const onSearch = (value, _e, info) => console.log(info?.source, value);
   const [modalOpen, setModalOpen] = useState(false);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(
+        "https://flightbooking-be.onrender.com/flight/get-all-flight"
+      );
+
+      setData(response.data);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <Flex vertical gap="large">
@@ -160,32 +182,30 @@ const FlightsPage = () => {
         </Modal>
       </Flex>
       <Table dataSource={data}>
-        <Column title="ID" dataIndex="key" key="key" />
-        <Column title="Name" dataIndex="firstName" key="firstName" />
-        <Column title="From" dataIndex="origin" key="origin" />
-        <Column title="To" dataIndex="destination" key="destination" />
+        <Column title="ID" dataIndex="id" key="id" />
+        <Column
+          title="From"
+          dataIndex="departureAirportId"
+          key="departureAirportId"
+        />
+        <Column
+          title="To"
+          dataIndex="arrivalAirportId"
+          key="arrivalAirportId"
+        />
+        <Column
+          title="Departure Day"
+          dataIndex="departureDate"
+          key="departureDate"
+        />
+        <Column title="Arrival Day" dataIndex="arrivalDate" key="arrivalDate" />
         <Column title="Duration" dataIndex="duration" key="duration" />
+        <Column title="Plane" dataIndex="planeId" key="planeId" />
         <Column
           title="Status"
-          dataIndex="tags"
-          key="tags"
-          render={(tags) => (
-            <>
-              {tags.map((tag) => {
-                let color;
-                if (tag === "Active") {
-                  color = "green";
-                } else if (tag === "Cancelled") {
-                  color = "red";
-                }
-                return (
-                  <Tag color={color} key={tag}>
-                    {tag.toUpperCase()}
-                  </Tag>
-                );
-              })}
-            </>
-          )}
+          dataIndex="flightStatus"
+          key="flightStatus"
+          render={(tags) => <>{<Tag key={tags}>{tags.toUpperCase()}</Tag>}</>}
         />
         <Column
           title="Action"
