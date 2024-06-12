@@ -1,21 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-    Button,
-    Flex,
-    Table,
-    Typography,
-    Modal,
-    message,
-    Form,
-    Input,
-    InputNumber,
-    Upload,
-    Space,
-} from "antd";
+import { Button, Flex, Table, Typography, Modal, message, Form, Input, InputNumber, Upload, Space } from "antd";
 import axios from "axios";
 import { UploadOutlined } from "@ant-design/icons";
-import { Voucher } from "./VoucherInterface.ts"; // Assuming Voucher interface exists
-import "./VoucherPage.css";
+import { Voucher } from "./VoucherInterface";
 
 const { Column } = Table;
 
@@ -32,62 +19,68 @@ const VoucherPage = () => {
 
     const fetchVouchers = async () => {
         try {
-            const response = await axios.get<Voucher[]>("http://localhost:7050/voucher/get-all");
+            const response = await axios.get<Voucher[]>("https://flightbookingbe-production.up.railway.app/voucher/get-all");
             setVouchers(response.data);
         } catch (error) {
-            console.error("Error fetching vouchers:", error);
-            message.error("Failed to fetch vouchers!"); // Inform user about error
+            handleError("Error fetching vouchers:", error);
         }
     };
 
     const handleAddOrUpdateVoucher = async (values) => {
         try {
-            let formData = new FormData();
-            formData.append("Voucher Code", values.code);
-            formData.append("Voucher Name", values.voucherName);
-            formData.append("Voucher Discount", values.discountAmount);
+            const formData = new FormData();
+            formData.append("code", values.code);
+            formData.append("voucherName", values.voucherName);
+            formData.append("discountAmount", values.discountAmount);
             if (values.file) {
-                formData.append("File", values.file.file);
+                formData.append("file", values.file.file);
             }
 
-            const url = isEditing ? `http://localhost:7050/voucher/update/${currentVoucher?.id}` : "http://localhost:7050/voucher/add";
+            const url = isEditing ? `https://flightbookingbe-production.up.railway.app/voucher/update/${currentVoucher?.id}` : "https://flightbookingbe-production.up.railway.app/voucher/add";
             const method = isEditing ? 'put' : 'post';
 
-            const response = await axios({
+            await axios({
                 method,
                 url,
                 data: formData,
-                headers: isEditing ? {} : { 'Content-Type': 'multipart/form-data' }, // Content-Type header only needed for POST requests with file uploads
+                headers: isEditing ? {} : { 'Content-Type': 'multipart/form-data' },
             });
 
             message.success(isEditing ? "Voucher updated successfully!" : "Voucher added successfully!");
             fetchVouchers();
-            setModalOpen(false);
-            form.resetFields();
-            setIsEditing(false);
-            setCurrentVoucher(null);
+            resetForm();
         } catch (error) {
-            message.error("Failed to submit voucher.");
-            console.error("Error submitting voucher:", error);
+            handleError("Failed to submit voucher.", error);
         }
     };
 
     const handleDeleteVoucher = async (id) => {
         try {
-            await axios.delete(`http://localhost:7050/voucher/delete/${id}`);
+            await axios.delete(`https://flightbookingbe-production.up.railway.app/delete/${id}`);
             message.success("Voucher deleted successfully!");
             fetchVouchers();
         } catch (error) {
-            message.error("Failed to delete voucher.");
-            console.error("Error deleting voucher:", error);
+            handleError("Failed to delete voucher.", error);
         }
     };
 
-    const handleEditVoucher = (record: Voucher) => { // Type assertion
+    const handleEditVoucher = (record: Voucher) => {
         setIsEditing(true);
         setCurrentVoucher(record);
         form.setFieldsValue(record);
         setModalOpen(true);
+    };
+
+    const resetForm = () => {
+        form.resetFields();
+        setIsEditing(false);
+        setCurrentVoucher(null);
+        setModalOpen(false);
+    };
+
+    const handleError = (messageText, error) => {
+        console.error(messageText, error);
+        message.error(messageText);
     };
 
     return (
@@ -103,14 +96,9 @@ const VoucherPage = () => {
             <Modal
                 title={isEditing ? "Edit Voucher" : "Add Voucher"}
                 centered
-                open={modalOpen}
+                visible={modalOpen}
                 onOk={form.submit}
-                onCancel={() => {
-                    setModalOpen(false);
-                    form.resetFields();
-                    setIsEditing(false);
-                    setCurrentVoucher(null);
-                }}
+                onCancel={resetForm}
             >
                 <Form form={form} layout="vertical" onFinish={handleAddOrUpdateVoucher}>
                     <Form.Item
@@ -132,7 +120,8 @@ const VoucherPage = () => {
                         name="discountAmount"
                         rules={[{ required: true, message: "Please enter discount amount" }]}
                     >
-                        <InputNumber min={0} max={100} /> </Form.Item>
+                        <InputNumber min={0} max={100} />
+                    </Form.Item>
                     <Form.Item label="File" name="file">
                         <Upload beforeUpload={() => false} maxCount={1}>
                             <Button icon={<UploadOutlined />}>Upload Image</Button>
@@ -144,18 +133,25 @@ const VoucherPage = () => {
                 <Column title="Code" dataIndex="code" key="code" />
                 <Column title="Name" dataIndex="voucherName" key="voucherName" />
                 <Column title="Discount" dataIndex="discountAmount" key="discountAmount" />
-                <Column title="Image URL" dataIndex="voucherImageUrl" key="voucherImageUrl" render={(text) => <a href={text} target="_blank" rel="noopener noreferrer">View Image</a>} />
+                <Column
+                    title="Image URL"
+                    dataIndex="voucherImageUrl"
+                    key="voucherImageUrl"
+                    render={(text) => <a href={text} target="_blank" rel="noopener noreferrer">View Image</a>}
+                />
                 <Column
                     title="Actions"
                     key="actions"
-                    render={(_, record) => ( // Type assertion
+                    render={(_, record: Voucher) => (
                         <Space size="middle">
-                            <Button type="primary" onClick={() => handleEditVoucher(record as Voucher)}>Edit</Button>
-                            <Button danger onClick={() => handleDeleteVoucher((record as Voucher).id)}>Delete</Button>
+                            <Button type="primary" onClick={() => handleEditVoucher(record)}>Edit</Button>
+                            <Button danger onClick={() => handleDeleteVoucher(record.id)}>Delete</Button>
                         </Space>
                     )}
                 />
             </Table>
-        </Flex >
-    )
-}
+        </Flex>
+    );
+};
+
+export default VoucherPage;

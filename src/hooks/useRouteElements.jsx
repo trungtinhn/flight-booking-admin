@@ -7,6 +7,7 @@ import PricePage from "../modules/price/pages/PricesPage";
 import AirlinePage from "../modules/airlines/pages/AirlinePage";
 import PlanePage from "../modules/planes/pages/PlanePage";
 import AdminChatDashboard from "../modules/chat/pages/AdminChatDashboard";
+import VoucherPage from "../modules/vouchers/VoucherPage";
 
 
 export default function useRouteElements() {
@@ -59,15 +60,14 @@ export default function useRouteElements() {
         </MainLayout>
       ),
     },
-    // {
-    //   path: "/voucher",
-    //   element: (
-
-    //     <MainLayout>
-    //       <VoucherPage />
-    //     </MainLayout>
-    //   )
-    // },
+    {
+      path: "/voucher",
+      element: (
+        <MainLayout>
+          <VoucherPage />
+        </MainLayout>
+      )
+    },
     {
       path: "*",
       element: <h1>Not Found</h1>,

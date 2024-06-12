@@ -118,7 +118,7 @@ const AdminChat: React.FC = () => {
     const [currentCustomerAvatar, setCurrentCustomerAvatar] = useState<string>('');
     const socketRef = useRef<WebSocket | null>(null);
 
-    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmcxMjMiLCJpYXQiOjE3MTgxOTYyMzQsImV4cCI6MTcxODIxMDYzNH0.wJlm4X4G008xe-9YMFPPPkHLxV7KgrcdyLYv6MSf6X4"; // Token của admin
+    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmdsZSIsImlhdCI6MTcxODE4MTIwNiwiZXhwIjoxNzE4MTk1NjA2fQ.hJZ7PyD7u2KFOnb6H-JV-C-MC68J-48Smq0c3lPeLwc"; // Token của admin
 
     useEffect(() => {
         const fetchAdminId = async () => {
@@ -205,7 +205,7 @@ const AdminChat: React.FC = () => {
                         content: 'Nhân viên đang hỗ trợ bạn...',
                         senderId: adminId!,
                         receiverId: customerId,
-                        createdAt: new Date().toISOString(),
+                        createdAt: new Date().toISOString() // Use ISO 8601 format
                     };
                     socketRef.current.send(JSON.stringify(notificationMessage));
                 }
@@ -238,7 +238,7 @@ const AdminChat: React.FC = () => {
                 content: message,
                 senderId: adminId,
                 receiverId: currentSessionId,
-                createdAt: new Date().toISOString(),
+                createdAt: new Date().toISOString() // Use ISO 8601 format
             };
 
             socketRef.current.send(JSON.stringify(messageContent));
@@ -280,10 +280,12 @@ const AdminChat: React.FC = () => {
                 </ChatHeader>
                 <ChatBody>
                     {messages.map((msg, index) => (
-                        <ChatMessage key={index} isCustomer={msg.senderId === adminId}>
-                            <div>{msg.content}</div>
-                            <MessageTimestamp>{msg.createdAt}</MessageTimestamp>
-                        </ChatMessage>
+                        <div key={index} style={{ textAlign: msg.senderId === adminId ? 'right' : 'left' }}>
+                            <ChatMessage isCustomer={msg.senderId !== adminId}>
+                                <div>{msg.content}</div>
+                                <MessageTimestamp>{new Date(msg.createdAt).toLocaleString()}</MessageTimestamp>
+                            </ChatMessage>
+                        </div>
                     ))}
                 </ChatBody>
                 <ChatInputContainer>
