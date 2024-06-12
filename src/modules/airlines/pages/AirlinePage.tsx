@@ -58,7 +58,7 @@ const AirlinePage = () => {
 
     axios
       .post(
-        "https://flightbooking-be.onrender.com/airlines/upload-new-airline",
+        "https://flightbookingbe-production.up.railway.app/airlines/upload-new-airline",
         formData,
         {
           headers: {
@@ -101,7 +101,7 @@ const AirlinePage = () => {
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        "https://flightbooking-be.onrender.com/airlines"
+        "https://flightbookingbe-production.up.railway.app/airlines"
       );
 
       console.log(response.data);
@@ -192,14 +192,7 @@ const AirlinePage = () => {
             }}
           />
           <Column title="Name" dataIndex="airlineName" key="airlineName" />
-          {/* <Column
-            title="Number of Planes"
-            key="planes"
-            render={(_, record) => {
-              console.log(record);
-              return <Typography.Text>{record.planes.length}</Typography.Text>;
-            }}
-          /> */}
+
           <Column
             title="Action"
             key="action"
