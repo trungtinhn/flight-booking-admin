@@ -136,6 +136,30 @@ const FlightsPage = () => {
     fetchPlaneData();
   }, []);
 
+  const addFlight = async () => {
+    try {
+      const response = await axios.post(
+        "https://flightbookingbe-production.up.railway.app/flight/create-new-flight",
+        {
+          departureAirportId,
+          arrivalAirportId,
+          departureDate,
+          arrivalDate,
+          planeId,
+          duration: 2,
+          flightStatus,
+        }
+      );
+      console.log(response);
+      fetchData();
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Flex vertical gap="large">
       <Typography.Title level={2}>Flights Management</Typography.Title>
@@ -157,7 +181,10 @@ const FlightsPage = () => {
           title="Add new flights"
           centered
           open={modalOpen}
-          onOk={() => setModalOpen(false)}
+          onOk={() => {
+            addFlight();
+            setModalOpen(false);
+          }}
           onCancel={() => setModalOpen(false)}
         >
           <Flex vertical align="center">
