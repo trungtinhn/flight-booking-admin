@@ -119,7 +119,7 @@ const AdminChat: React.FC = () => {
     const [currentCustomerAvatar, setCurrentCustomerAvatar] = useState<string>('');
     const socketRef = useRef<WebSocket | null>(null);
 
-    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmcxMjMiLCJpYXQiOjE3MTgyMzQ0MjgsImV4cCI6MTcxODI0ODgyOH0.QTNizvAIH_Suwf13gULUbDGx2EuyDeY5QsL6g2EJiao"; // Admin token
+    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmcxMjMiLCJpYXQiOjE3MTgyNTQ0MDksImV4cCI6MTcxODI2ODgwOX0.PBhl3idI4BKG4H5BEjGtOf-rKjFceGFHG-PMW6R8u5o"; // Admin token
 
     useEffect(() => {
         const fetchAdminId = async () => {
