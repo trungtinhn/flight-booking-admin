@@ -41,46 +41,126 @@ const uploadProps = {
 };
 
 const FlightsPage = () => {
-  const onSearch = (value, _e, info) => console.log(info?.source, value);
+  const onSearch = (value, _e, info) => {
+    console.log(info?.source, value);
+  };
   const [modalOpen, setModalOpen] = useState(false);
+  const [delayModalOpen, setDelayModalOpen] = useState(false);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [flightLoading, setFlightLoading] = useState(true);
+  const [airportLoading, setAirportLoading] = useState(true);
+  const [planeLoading, setPlaneLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [delayFlightId, setDelayFlightId] = useState(null);
+  const [delayDepartureDate, setDelayDepartureDate] = useState("");
+  const [delayArrivalDate, setDelayArrivalDate] = useState("");
+  const [delayReason, setDelayReason] = useState("");
+  const [planes, setPlanes] = useState([]);
+
+  //Create new flight
+  const [flightStatus, setFlightStatus] = useState("");
+  const [departureDate, setDepartureDate] = useState("");
+  const [arrivalDate, setArrivalDate] = useState("");
+  const [planeId, setPlaneId] = useState("");
+  const [departureAirportId, setDepartureAirportId] = useState("");
+  const [arrivalAirportId, setArrivalAirportId] = useState("");
 
   const [airports, setAirports] = useState([]);
 
+  const delayFlight = async (id, departureDate, arrivalDate, reason) => {
+    try {
+      const response = await axios.post(
+        "https://flightbookingbe-production.up.railway.app/flight/delay",
+        {
+          flightId: id,
+          newDepartureTime: departureDate,
+          newArrivalTime: arrivalDate,
+          reason,
+        }
+      );
+      fetchData();
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchAirportData = async () => {
+    setAirportLoading(true);
     try {
       const response = await axios.get(
-        "https://flightbooking-be.onrender.com/airports"
+        "https://flightbookingbe-production.up.railway.app/airports"
       );
 
       setAirports(response.data);
     } catch (error) {
       setError(error);
     } finally {
-      setLoading(false);
+      setAirportLoading(false);
+    }
+  };
+
+  const fetchPlaneData = async () => {
+    try {
+      const response = await axios.get(
+        "https://flightbookingbe-production.up.railway.app/airlines/get-all-plane"
+      );
+      console.log(response.data);
+
+      setPlanes(response.data);
+    } catch (error) {
+      setError(error);
+    } finally {
+      setPlaneLoading(false);
     }
   };
 
   const fetchData = async () => {
     try {
       const response = await axios.get(
-        "https://flightbooking-be.onrender.com/flight/get-all-flight"
+        "https://flightbookingbe-production.up.railway.app/flight/get-all-flight"
       );
 
       setData(response.data);
     } catch (error) {
       setError(error);
     } finally {
-      setLoading(false);
+      setFlightLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
     fetchAirportData();
+    fetchPlaneData();
   }, []);
+
+  const addFlight = async () => {
+    try {
+      const response = await axios.post(
+        "https://flightbookingbe-production.up.railway.app/flight/create-new-flight",
+        {
+          departureAirportId,
+          arrivalAirportId,
+          departureDate,
+          arrivalDate,
+          planeId,
+          duration: 2,
+          flightStatus,
+        }
+      );
+      console.log(response);
+      fetchData();
+    } catch (error) {
+      console.log(error);
+      setError(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Flex vertical gap="large">
@@ -103,7 +183,10 @@ const FlightsPage = () => {
           title="Add new flights"
           centered
           open={modalOpen}
-          onOk={() => setModalOpen(false)}
+          onOk={() => {
+            addFlight();
+            setModalOpen(false);
+          }}
           onCancel={() => setModalOpen(false)}
         >
           <Flex vertical align="center">
@@ -120,7 +203,11 @@ const FlightsPage = () => {
               labelAlign="left"
             >
               <Form.Item label="From">
-                <Select>
+                <Select
+                  onChange={(value) => {
+                    setDepartureAirportId(value);
+                  }}
+                >
                   {airports.map((airport) => (
                     <Select.Option key={airport.id} value={airport.id}>
                       {airport.airportName}
@@ -129,7 +216,11 @@ const FlightsPage = () => {
                 </Select>
               </Form.Item>
               <Form.Item label="To">
-                <Select>
+                <Select
+                  onChange={(value) => {
+                    setArrivalAirportId(value);
+                  }}
+                >
                   {airports.map((airport) => (
                     <Select.Option key={airport.id} value={airport.id}>
                       {airport.airportName}
@@ -139,16 +230,34 @@ const FlightsPage = () => {
               </Form.Item>
 
               <Form.Item label="Departure Day">
-                <DatePicker showTime />
+                <DatePicker
+                  showTime
+                  onChange={(date, dateString) => {
+                    setDepartureDate(date.toISOString());
+                    console.log(date, dateString);
+                  }}
+                />
               </Form.Item>
               <Form.Item label="Arrival Day">
-                <DatePicker showTime />
+                <DatePicker
+                  showTime
+                  onChange={(date, dateString) => {
+                    setArrivalDate(date.toISOString());
+                    console.log(date, dateString);
+                  }}
+                />
               </Form.Item>
               <Form.Item label="Plane">
-                <Select>
-                  <Select.Option value="1">1</Select.Option>
-                  <Select.Option value="2">2</Select.Option>
-                  <Select.Option value="3">3</Select.Option>
+                <Select
+                  onChange={(value) => {
+                    setPlaneId(value);
+                  }}
+                >
+                  {planes.map((plane) => (
+                    <Select.Option key={plane.id} value={plane.id}>
+                      {plane.flightNumber}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
               <Form.Item label="Status">
@@ -161,70 +270,135 @@ const FlightsPage = () => {
             </Form>
           </Flex>
         </Modal>
+        <Modal
+          title="Delay"
+          centered
+          open={delayModalOpen}
+          onOk={() => {
+            delayFlight(
+              delayFlightId,
+              delayDepartureDate,
+              delayArrivalDate,
+              delayReason
+            );
+            setDelayModalOpen(false);
+          }}
+          onCancel={() => setDelayModalOpen(false)}
+        >
+          <Flex vertical align="center">
+            <Form
+              labelCol={{ span: 8 }}
+              wrapperCol={{ span: 10 }}
+              layout="horizontal"
+              size="middle"
+              style={{ width: "100%" }}
+              labelAlign="left"
+            >
+              <Form.Item label="Departure Day">
+                <DatePicker
+                  showTime
+                  onChange={(date, dateString) => {
+                    setDelayDepartureDate(date.toISOString());
+                    console.log(date, dateString);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item label="Arrival Day">
+                <DatePicker
+                  showTime
+                  onChange={(date, dateString) => {
+                    setDelayArrivalDate(date.toISOString());
+                    console.log(date, dateString);
+                  }}
+                />
+              </Form.Item>
+              <Form.Item label="Reason">
+                <Input
+                  onChange={(event) => {
+                    setDelayReason(event.target.value);
+                  }}
+                />
+              </Form.Item>
+            </Form>
+          </Flex>
+        </Modal>
       </Flex>
-      <Table dataSource={data}>
-        <Column title="ID" dataIndex="id" key="id" />
-        <Column
-          title="From"
-          dataIndex="departureAirportId"
-          key="departureAirportId"
-        />
-        <Column
-          title="To"
-          dataIndex="arrivalAirportId"
-          key="arrivalAirportId"
-        />
-        <Column
-          title="Departure Day"
-          dataIndex="departureDate"
-          key="departureDate"
-          render={(item) => {
-            const date = new Date(item);
-            const day = date.getDate();
-            const month = date.getMonth() + 1;
-            const year = date.getFullYear();
-            const hours = date.getHours();
-            const minutes = date.getMinutes();
-            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
-            return <>{<span key={item}>{formattedDate}</span>}</>;
-          }}
-        />
-        <Column
-          title="Arrival Day"
-          dataIndex="arrivalDate"
-          key="arrivalDate"
-          render={(item) => {
-            const date = new Date(item);
-            const day = date.getDate();
-            const month = date.getMonth() + 1;
-            const year = date.getFullYear();
-            const hours = date.getHours();
-            const minutes = date.getMinutes();
-            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
-            return <>{<span key={item}>{formattedDate}</span>}</>;
-          }}
-        />
-        <Column title="Duration" dataIndex="duration" key="duration" />
-        <Column title="Plane" dataIndex="planeId" key="planeId" />
-        <Column
-          title="Status"
-          dataIndex="flightStatus"
-          key="flightStatus"
-          render={(tags) => <>{<Tag key={tags}>{tags.toUpperCase()}</Tag>}</>}
-        />
-        <Column
-          title="Action"
-          key="action"
-          render={(_, record) => (
-            <Space size="middle">
-              <Button type="primary" style={{ backgroundColor: "#8DD3BB" }}>
-                Edit
-              </Button>
-              <Button danger>Delete</Button>
-            </Space>
-          )}
-        />
-      </Table>
+      {flightLoading || airportLoading || planeLoading ? (
+        <div>Loading...</div>
+      ) : (
+        <Table dataSource={data}>
+          <Column title="ID" dataIndex="id" key="id" />
+          <Column
+            title="From"
+            dataIndex="departureAirportId"
+            key="departureAirportId"
+          />
+          <Column
+            title="To"
+            dataIndex="arrivalAirportId"
+            key="arrivalAirportId"
+          />
+          <Column
+            title="Departure Day"
+            dataIndex="departureDate"
+            key="departureDate"
+            render={(item) => {
+              const date = new Date(item);
+              const day = date.getDate();
+              const month = date.getMonth() + 1;
+              const year = date.getFullYear();
+              const hours = date.getHours();
+              const minutes = date.getMinutes();
+              const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+              return <>{<span key={item}>{formattedDate}</span>}</>;
+            }}
+          />
+          <Column
+            title="Arrival Day"
+            dataIndex="arrivalDate"
+            key="arrivalDate"
+            render={(item) => {
+              const date = new Date(item);
+              const day = date.getDate();
+              const month = date.getMonth() + 1;
+              const year = date.getFullYear();
+              const hours = date.getHours();
+              const minutes = date.getMinutes();
+              const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+              return <>{<span key={item}>{formattedDate}</span>}</>;
+            }}
+          />
+          <Column title="Duration" dataIndex="duration" key="duration" />
+          <Column title="Plane" dataIndex="planeId" key="planeId" />
+          <Column
+            title="Status"
+            dataIndex="flightStatus"
+            key="flightStatus"
+            render={(tags) => <>{<Tag key={tags}>{tags.toUpperCase()}</Tag>}</>}
+          />
+          <Column
+            title="Action"
+            key="action"
+            render={(_, record) => (
+              <Space size="middle">
+                {record.flightStatus !== "Delayed" && (
+                  <Button
+                    type="primary"
+                    style={{ backgroundColor: "#8DD3BB" }}
+                    onClick={() => {
+                      setDelayFlightId(record.id);
+                      setDelayModalOpen(true);
+                    }}
+                  >
+                    Delay
+                  </Button>
+                )}
+                <Button danger>Cancel</Button>
+              </Space>
+            )}
+          />
+        </Table>
+      )}
     </Flex>
   );
 };

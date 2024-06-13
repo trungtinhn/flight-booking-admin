@@ -17,7 +17,12 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 
 const PlanePage = () => {
-  const onSearch = (value, _e, info) => console.log(info?.source, value);
+  const onSearch = (value, _e, info) => {
+    setPlanes(
+      planes.filter((item) => item.flightNumber.toString().includes(value))
+    );
+    console.log(info?.source, value);
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [airlines, setAirlines] = useState([]);
   const [planes, setPlanes] = useState([]);
@@ -28,7 +33,7 @@ const PlanePage = () => {
   const fetchAirlineData = async () => {
     try {
       const response = await axios.get(
-        "https://flightbooking-be.onrender.com/airlines"
+        "https://flightbookingbe-production.up.railway.app/airlines"
       );
 
       setAirlines(response.data);
@@ -42,8 +47,9 @@ const PlanePage = () => {
   const fetchPlaneData = async () => {
     try {
       const response = await axios.get(
-        "https://flightbooking-be.onrender.com/airlines/get-all-plane"
+        "https://flightbookingbe-production.up.railway.app/airlines/get-all-plane"
       );
+      console.log(response.data);
 
       setPlanes(response.data);
     } catch (error) {
@@ -57,11 +63,9 @@ const PlanePage = () => {
     try {
       console.log(selectedAirline);
       const response = await axios.post(
-        "https://flightbookingbe-production.up.railway.app/airlines/create-new--plane",
-        {
-          airlineId: selectedAirline,
-        }
+        `https://flightbookingbe-production.up.railway.app/airlines/create-new-plane?airlineId=${selectedAirline}`
       );
+      fetchPlaneData();
       console.log(response);
     } catch (error) {
       console.log(error);
@@ -125,35 +129,32 @@ const PlanePage = () => {
           </Flex>
         </Modal>
       </Flex>
-      <Table dataSource={planes}>
-        <Column title="ID" dataIndex="id" key="id" />
-        <Column
-          title="Flight Number"
-          dataIndex="flightNumber"
-          key="flightNumber"
-        />
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <Table dataSource={planes}>
+          <Column title="ID" dataIndex="id" key="id" />
+          <Column
+            title="Flight Number"
+            dataIndex="flightNumber"
+            key="flightNumber"
+          />
 
-        <Column
-          title="Airline"
-          dataIndex="airline"
-          key="airline"
-          render={(_, record) => {
-            return <span>{record.airline.airlineName}</span>;
-          }}
-        />
-        <Column
-          title="Action"
-          key="action"
-          render={(_, record) => (
-            <Space size="middle">
-              <Button type="primary" style={{ backgroundColor: "#8DD3BB" }}>
-                Edit
-              </Button>
-              <Button danger>Delete</Button>
-            </Space>
-          )}
-        />
-      </Table>
+          <Column title="Airline" dataIndex="airlineId" key="airlineId" />
+          <Column
+            title="Action"
+            key="action"
+            render={(_, record) => (
+              <Space size="middle">
+                <Button type="primary" style={{ backgroundColor: "#8DD3BB" }}>
+                  Edit
+                </Button>
+                <Button danger>Delete</Button>
+              </Space>
+            )}
+          />
+        </Table>
+      )}
     </Flex>
   );
 };
