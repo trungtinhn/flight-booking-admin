@@ -17,7 +17,12 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 
 const PlanePage = () => {
-  const onSearch = (value, _e, info) => console.log(info?.source, value);
+  const onSearch = (value, _e, info) => {
+    setPlanes(
+      planes.filter((item) => item.flightNumber.toString().includes(value))
+    );
+    console.log(info?.source, value);
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [airlines, setAirlines] = useState([]);
   const [planes, setPlanes] = useState([]);

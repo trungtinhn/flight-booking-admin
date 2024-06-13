@@ -33,7 +33,10 @@ const dummyRequest = ({ file, onSuccess }) => {
 };
 
 const AirlinePage = () => {
-  const onSearch = (value, _e, info) => console.log(info?.source, value);
+  const onSearch = (value, _e, info) => {
+    setData(data.filter((item) => item.airlineName.toString().includes(value)));
+    console.log(info?.source, value);
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);

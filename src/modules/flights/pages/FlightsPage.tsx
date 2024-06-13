@@ -41,7 +41,9 @@ const uploadProps = {
 };
 
 const FlightsPage = () => {
-  const onSearch = (value, _e, info) => console.log(info?.source, value);
+  const onSearch = (value, _e, info) => {
+    console.log(info?.source, value);
+  };
   const [modalOpen, setModalOpen] = useState(false);
   const [delayModalOpen, setDelayModalOpen] = useState(false);
   const [data, setData] = useState([]);
