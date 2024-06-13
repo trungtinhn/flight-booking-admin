@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import {
     Button,
-    Flex,
-    Space,
+    Row,
+    Col,
     Table,
     Typography,
     Input,
     Modal,
     message,
     Form,
-    Select,
+    Image,
 } from "antd";
 import axios from "axios";
 import "./PricesPage.css";
@@ -17,63 +17,106 @@ import "./PricesPage.css";
 interface Price {
     key: string;
     class: string;
-    price: number; // Adjust the type based on your actual data
+    price: number;
+}
+
+interface Plane {
+    id: number;
+    flightNumber: string;
+}
+
+interface Regulation {
+    id: number;
+    firstClassPrice: number;
+    businessPrice: number;
+    economyPrice: number;
+}
+
+interface Airline {
+    id: number;
+    airlineName: string;
+    logoUrl: string;
+    promoForAirline: string[];
+    planes: Plane[];
 }
 
 const { Column } = Table;
 const { Search } = Input;
 
 const PricesPage = () => {
-    const [prices, setPrices] = useState<Price[]>([]);
+    const [airlines, setAirlines] = useState<Airline[]>([]);
+    const [regulations, setRegulations] = useState<{ [key: number]: Regulation | null }>({});
+    const [selectedRegulation, setSelectedRegulation] = useState<Regulation | null>(null);
+    const [selectedClass, setSelectedClass] = useState<string | null>(null);
+    const [selectedAirlineId, setSelectedAirlineId] = useState<number | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [form] = Form.useForm();
 
     useEffect(() => {
-        fetchPrices();
+        fetchAirlines();
     }, []);
 
-    const fetchPrices = async () => {
+    const fetchAirlines = async () => {
         try {
-            const response = await axios.get("https://flightbookingbe-production.up.railway.app/regulations/getRegulation");
-            const { firstClassPrice, businessPrice, economyPrice } = response.data;
-
-            setPrices([
-                { key: "1", class: "First Class", price: firstClassPrice },
-                { key: "2", class: "Business", price: businessPrice },
-                { key: "3", class: "Economy", price: economyPrice }
-            ]);
+            const response = await axios.get("http://localhost:7050/regulations/getAllWithRegulations");
+            const data = response.data;
+            setAirlines(data);
         } catch (error) {
-            console.error("Error fetching prices:", error);
+            console.error("Error fetching airlines:", error);
         }
     };
 
-
-    const onSearch = (value) => {
-        console.log(value);
+    const fetchRegulation = async (airlineId: number) => {
+        try {
+            const response = await axios.get(`http://localhost:7050/regulations/byAirline/${airlineId}`);
+            return response.data as Regulation;
+        } catch (error) {
+            console.error("Error fetching regulation:", error);
+            return null;
+        }
     };
 
-    const handleUpdatePrice = async (values) => {
+    const handleExpand = async (expanded: boolean, airline: Airline) => {
+        if (expanded && airline.id) {
+            const regulation = await fetchRegulation(airline.id);
+            setRegulations(prev => ({ ...prev, [airline.id]: regulation }));
+        }
+    };
+
+    const handleUpdatePrice = async (values: { price: number }) => {
         try {
-            const { classType, price } = values;
-            let updateUrl = "";
+            if (!selectedAirlineId || !selectedClass) return;
 
-            switch (classType) {
-                case "First Class":
-                    updateUrl = "https://flightbookingbe-production.up.railway.app/regulations/updateFirstClassPrice";
-                    break;
-                case "Business":
-                    updateUrl = "https://flightbookingbe-production.up.railway.app/regulations/updateBusinessPrice";
-                    break;
-                case "Economy":
-                    updateUrl = "https://flightbookingbe-production.up.railway.app/regulations/updateEconomyPrice";
-                    break;
-                default:
-                    break;
+            const updateUrl = `http://localhost:7050/regulations/updatePrice/${selectedAirlineId}`;
+            const params: any = {};
+            if (selectedClass === 'First Class') {
+                params.firstClassPrice = values.price;
+            } else if (selectedClass === 'Business') {
+                params.businessPrice = values.price;
+            } else if (selectedClass === 'Economy') {
+                params.economyPrice = values.price;
             }
+            await axios.put(updateUrl, null, { params });
 
-            await axios.put(updateUrl, null, { params: { price } });
+            // Cập nhật state regulations ngay lập tức sau khi cập nhật giá vé thành công
+            setRegulations(prev => {
+                const updatedRegulation: Regulation = {
+                    id: prev[selectedAirlineId]?.id || selectedAirlineId,
+                    firstClassPrice: prev[selectedAirlineId]?.firstClassPrice || 0,
+                    businessPrice: prev[selectedAirlineId]?.businessPrice || 0,
+                    economyPrice: prev[selectedAirlineId]?.economyPrice || 0,
+                };
+                if (selectedClass === 'First Class') {
+                    updatedRegulation.firstClassPrice = values.price;
+                } else if (selectedClass === 'Business') {
+                    updatedRegulation.businessPrice = values.price;
+                } else if (selectedClass === 'Economy') {
+                    updatedRegulation.economyPrice = values.price;
+                }
+                return { ...prev, [selectedAirlineId]: updatedRegulation };
+            });
+
             message.success("Price updated successfully!");
-            fetchPrices();
             setModalOpen(false);
             form.resetFields();
         } catch (error) {
@@ -82,61 +125,114 @@ const PricesPage = () => {
         }
     };
 
+    const onFinish = (values: any) => {
+        handleUpdatePrice(values);
+    };
+
+    const getInitialPrice = () => {
+        if (!selectedRegulation || !selectedClass) return 0;
+        if (selectedClass === 'First Class') {
+            return selectedRegulation.firstClassPrice;
+        } else if (selectedClass === 'Business') {
+            return selectedRegulation.businessPrice;
+        } else if (selectedClass === 'Economy') {
+            return selectedRegulation.economyPrice;
+        }
+        return 0;
+    };
+
     return (
-        <Flex vertical gap="large">
+        <div style={{ padding: '20px' }}>
             <Typography.Title level={2}>Prices Management</Typography.Title>
-            <Flex justify="space-between">
-                <Search
-                    placeholder="Search prices"
-                    onSearch={onSearch}
-                    enterButton
-                    className="search-input"
+            <Row justify="space-between" style={{ marginBottom: '20px' }}>
+                <Col>
+                    <Search
+                        placeholder="Search prices"
+                        onSearch={(value) => console.log(value)}
+                        enterButton
+                        className="search-input"
+                    />
+                </Col>
+            </Row>
+            <Table
+                dataSource={airlines}
+                rowKey="id"
+                expandable={{
+                    expandedRowRender: airline => {
+                        const regulation = regulations[airline.id];
+                        return (
+                            <Table
+                                dataSource={[
+                                    { key: '1', class: 'First Class', price: regulation?.firstClassPrice },
+                                    { key: '2', class: 'Business', price: regulation?.businessPrice },
+                                    { key: '3', class: 'Economy', price: regulation?.economyPrice }
+                                ]}
+                                rowKey="key"
+                                pagination={false}
+                            >
+                                <Column title="Class" dataIndex="class" key="class" />
+                                <Column title="Price" dataIndex="price" key="price" render={price => price !== undefined ? `$${price}` : 'N/A'} />
+                                <Column
+                                    title="Action"
+                                    key="action"
+                                    render={(text, record: Price) => (
+                                        <Button
+                                            type="link"
+                                            onClick={() => {
+                                                setSelectedClass(record.class);
+                                                setSelectedAirlineId(airline.id);
+                                                form.setFieldsValue({ price: record.price });
+                                                setSelectedRegulation(regulation);
+                                                setModalOpen(true);
+                                            }}
+                                        >
+                                            Edit
+                                        </Button>
+                                    )}
+                                />
+                            </Table>
+                        )
+                    },
+                    onExpand: handleExpand,
+                }}
+            >
+                <Column
+                    title="Airline"
+                    dataIndex="airlineName"
+                    key="airlineName"
+                    render={(text, record: Airline) => (
+                        <Row align="middle">
+                            <Col>
+                                <Image src={record.logoUrl} alt={record.airlineName} width={50} height={50} />
+                            </Col>
+                            <Col style={{ marginLeft: 10 }}>{record.airlineName}</Col>
+                        </Row>
+                    )}
                 />
-                <Button
-                    type="primary"
-                    style={{ backgroundColor: "#8DD3BB", fontWeight: 500 }}
-                    onClick={() => setModalOpen(true)}
-                >
-                    Update Price
-                </Button>
-                <Modal
-                    title="Update Price"
-                    centered
-                    open={modalOpen}
-                    onOk={form.submit}
-                    onCancel={() => setModalOpen(false)}
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={handleUpdatePrice}
-                    >
-                        <Form.Item
-                            label="Class"
-                            name="classType"
-                            rules={[{ required: true, message: "Please select a class" }]}
-                        >
-                            <Select>
-                                <Select.Option value="First Class">First Class</Select.Option>
-                                <Select.Option value="Business">Business</Select.Option>
-                                <Select.Option value="Economy">Economy</Select.Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item
-                            label="Price"
-                            name="price"
-                            rules={[{ required: true, message: "Please enter a price" }]}
-                        >
-                            <Input type="number" />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            </Flex>
-            <Table dataSource={prices}>
-                <Column title="Class" dataIndex="class" key="class" />
-                <Column title="Price" dataIndex="price" key="price" />
             </Table>
-        </Flex>
+            <Modal
+                title="Update Price"
+                centered
+                open={modalOpen}
+                onOk={form.submit}
+                onCancel={() => setModalOpen(false)}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={onFinish}
+                >
+                    <Form.Item
+                        label="Price"
+                        name="price"
+                        initialValue={getInitialPrice()}
+                        rules={[{ required: true, message: "Please enter a price" }]}
+                    >
+                        <Input type="number" />
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </div>
     );
 };
 
