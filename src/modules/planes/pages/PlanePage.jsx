@@ -129,28 +129,32 @@ const PlanePage = () => {
           </Flex>
         </Modal>
       </Flex>
-      <Table dataSource={planes}>
-        <Column title="ID" dataIndex="id" key="id" />
-        <Column
-          title="Flight Number"
-          dataIndex="flightNumber"
-          key="flightNumber"
-        />
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <Table dataSource={planes}>
+          <Column title="ID" dataIndex="id" key="id" />
+          <Column
+            title="Flight Number"
+            dataIndex="flightNumber"
+            key="flightNumber"
+          />
 
-        <Column title="Airline" dataIndex="airlineId" key="airlineId" />
-        <Column
-          title="Action"
-          key="action"
-          render={(_, record) => (
-            <Space size="middle">
-              <Button type="primary" style={{ backgroundColor: "#8DD3BB" }}>
-                Edit
-              </Button>
-              <Button danger>Delete</Button>
-            </Space>
-          )}
-        />
-      </Table>
+          <Column title="Airline" dataIndex="airlineId" key="airlineId" />
+          <Column
+            title="Action"
+            key="action"
+            render={(_, record) => (
+              <Space size="middle">
+                <Button type="primary" style={{ backgroundColor: "#8DD3BB" }}>
+                  Edit
+                </Button>
+                <Button danger>Delete</Button>
+              </Space>
+            )}
+          />
+        </Table>
+      )}
     </Flex>
   );
 };
