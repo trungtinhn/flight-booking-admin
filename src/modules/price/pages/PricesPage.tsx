@@ -58,7 +58,7 @@ const PricesPage = () => {
 
     const fetchAirlines = async () => {
         try {
-            const response = await axios.get("http://localhost:7050/regulations/getAllWithRegulations");
+            const response = await axios.get("https://flightbookingbe-production.up.railway.app/regulations/getAllWithRegulations");
             const data = response.data;
             setAirlines(data);
         } catch (error) {
@@ -68,7 +68,7 @@ const PricesPage = () => {
 
     const fetchRegulation = async (airlineId: number) => {
         try {
-            const response = await axios.get(`http://localhost:7050/regulations/byAirline/${airlineId}`);
+            const response = await axios.get(`https://flightbookingbe-production.up.railway.app/regulations/byAirline/${airlineId}`);
             return response.data as Regulation;
         } catch (error) {
             console.error("Error fetching regulation:", error);
@@ -87,7 +87,7 @@ const PricesPage = () => {
         try {
             if (!selectedAirlineId || !selectedClass) return;
 
-            const updateUrl = `http://localhost:7050/regulations/updatePrice/${selectedAirlineId}`;
+            const updateUrl = `https://flightbookingbe-production.up.railway.app/regulations/updatePrice/${selectedAirlineId}`;
             const params: any = {};
             if (selectedClass === 'First Class') {
                 params.firstClassPrice = values.price;
