@@ -13,7 +13,8 @@ interface Session {
     customerId: number;
     status: string;
     latestMessage: string;
-    customerAvatar: string; // Add customerAvatar field
+    customerName: string;
+    customerAvatar: string;
 }
 
 const ChatContainer = styled.div`
@@ -118,12 +119,12 @@ const AdminChat: React.FC = () => {
     const [currentCustomerAvatar, setCurrentCustomerAvatar] = useState<string>('');
     const socketRef = useRef<WebSocket | null>(null);
 
-    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmdsZSIsImlhdCI6MTcxODIyOTk5NiwiZXhwIjoxNzE4MjQ0Mzk2fQ.NLq9kZXJhW1Oq2EVcinQBJLdw-57aGekTXEWwixM09A"; // Token của admin
+    const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0aHVvbmcxMjMiLCJpYXQiOjE3MTgyMzQ0MjgsImV4cCI6MTcxODI0ODgyOH0.QTNizvAIH_Suwf13gULUbDGx2EuyDeY5QsL6g2EJiao"; // Admin token
 
     useEffect(() => {
         const fetchAdminId = async () => {
             try {
-                const response = await fetch(`http://localhost:7050/users/token?token=${token}`);
+                const response = await fetch(`https://flightbookingbe-production.up.railway.app/users/token?token=${token}`);
                 if (response.ok) {
                     const data = await response.json();
                     setAdminId(data.id);
@@ -141,7 +142,7 @@ const AdminChat: React.FC = () => {
     useEffect(() => {
         const fetchSessions = async () => {
             try {
-                const response = await fetch(`http://localhost:7050/message/sessions`);
+                const response = await fetch(`https://flightbookingbe-production.up.railway.app/message/sessions`);
                 if (response.ok) {
                     const data = await response.json();
                     setSessions(data);
@@ -158,7 +159,7 @@ const AdminChat: React.FC = () => {
 
     useEffect(() => {
         const connectWebSocket = () => {
-            socketRef.current = new WebSocket('ws://localhost:7050/ws');
+            socketRef.current = new WebSocket('wss://flightbookingbe-production.up.railway.app/ws');
 
             socketRef.current.onopen = () => {
                 console.log('WebSocket connection established');
@@ -166,7 +167,17 @@ const AdminChat: React.FC = () => {
 
             socketRef.current.onmessage = (event) => {
                 const newMessage: Message = JSON.parse(event.data);
-                setMessages((prevMessages) => [...prevMessages, newMessage]);
+                console.log('Received message:', newMessage);
+                if (newMessage.receiverId === currentSessionId) {
+                    setMessages((prevMessages) => [...prevMessages, newMessage]);
+                } else {
+                    setSessions((prevSessions) => prevSessions.map(session => {
+                        if (session.id === newMessage.receiverId) {
+                            session.latestMessage = newMessage.content;
+                        }
+                        return session;
+                    }));
+                }
             };
 
             socketRef.current.onclose = () => {
@@ -185,50 +196,45 @@ const AdminChat: React.FC = () => {
                 socketRef.current.close();
             }
         };
-    }, []);
+    }, [currentSessionId]);
 
-    const handleSupport = (sessionId: number, customerId: number) => {
+    const handleSupport = async (sessionId: number, customerId: number) => {
         setCurrentSessionId(sessionId);
-        // Fetch customer's name and latest message
         const customer = sessions.find(session => session.id === sessionId);
-        setCurrentCustomerName(`Customer ${customerId}`);
-        setCurrentCustomerAvatar(customer?.customerAvatar || '');
-        // Update session status to active
-        fetch(`http://localhost:7050/message/startSupport?sessionId=${sessionId}&adminId=${adminId}`, {
-            method: 'POST'
-        }).then(response => response.json())
-            .then(data => {
-                setMessages(data.messages);
-                // Send a message to customer to notify the admin is supporting
-                if (socketRef.current) {
-                    const notificationMessage: Message = {
-                        content: 'Nhân viên đang hỗ trợ bạn...',
-                        senderId: adminId!,
-                        receiverId: customerId,
-                        createdAt: new Date().toISOString() // Use ISO 8601 format
-                    };
-                    socketRef.current.send(JSON.stringify(notificationMessage));
-                }
-            }).catch(error => {
-                console.error('Error updating session status', error);
+        setCurrentCustomerName(customer?.customerName || `Customer ${customerId}`);
+        setCurrentCustomerAvatar(customer?.customerAvatar || 'https://cdn-media.sforum.vn/storage/app/media/THANHAN/avatar-trang-64.jpg');
+        try {
+            const response = await fetch(`https://flightbookingbe-production.up.railway.app/message/startSupport?sessionId=${sessionId}&adminId=${adminId}`, {
+                method: 'POST'
             });
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Fetched messages for session:', data);
+                setMessages(data);
+            } else {
+                console.error('Failed to fetch messages for session');
+            }
+        } catch (error) {
+            console.error('Error updating session status', error);
+        }
     };
 
-    const endSupport = () => {
+    const endSupport = async () => {
         if (currentSessionId) {
-            fetch(`http://localhost:7050/message/endSession`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: currentSessionId })
-            }).then(response => response.json())
-                .then(() => {
-                    setCurrentSessionId(null);
-                    setMessages([]);
-                }).catch(error => {
-                    console.error('Error ending session', error);
+            try {
+                await fetch(`https://flightbookingbe-production.up.railway.app/message/endSession?sessionId=${currentSessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
                 });
+                setCurrentSessionId(null);
+                setMessages([]);
+                const updatedSessions = sessions.filter(session => session.id !== currentSessionId);
+                setSessions(updatedSessions);
+            } catch (error) {
+                console.error('Error ending session', error);
+            }
         }
     };
 
@@ -238,11 +244,12 @@ const AdminChat: React.FC = () => {
                 content: message,
                 senderId: adminId,
                 receiverId: currentSessionId,
-                createdAt: new Date().toISOString() // Use ISO 8601 format
+                createdAt: new Date().toISOString()
             };
 
             socketRef.current.send(JSON.stringify(messageContent));
             setMessage('');
+            setMessages((prevMessages) => [...prevMessages, messageContent]);
         }
     };
 
@@ -258,25 +265,18 @@ const AdminChat: React.FC = () => {
                 <h2>Customer Support</h2>
                 {sessions.filter(session => session.status === 'pending').map(session => (
                     <CustomerButton key={session.id} onClick={() => handleSupport(session.id, session.customerId)}>
-                        <Avatar src={session.customerAvatar} alt="Avatar" />
+                        <Avatar src={session.customerAvatar || 'https://cdn-media.sforum.vn/storage/app/media/THANHAN/avatar-trang-64.jpg'} alt="Avatar" />
                         <div>
-                            <div>Customer {session.customerId}</div>
+                            <div>{session.customerName || `Customer ${session.customerId}`}</div>
                             <div>{session.latestMessage}</div>
                         </div>
-                    </CustomerButton>
-                ))}
-                <h2>Waiting on Close</h2>
-                {sessions.filter(session => session.status === 'closed').map(session => (
-                    <CustomerButton key={session.id}>
-                        <Avatar src={session.customerAvatar} alt="Avatar" />
-                        <div>Customer {session.customerId}</div>
                     </CustomerButton>
                 ))}
             </Sidebar>
             <ChatArea>
                 <ChatHeader>
                     <h3>{currentCustomerName}</h3>
-                    {currentSessionId && <ChatButton onClick={endSupport}>Kết thúc hỗ trợ</ChatButton>}
+                    {currentSessionId && <ChatButton onClick={endSupport}>End Support</ChatButton>}
                 </ChatHeader>
                 <ChatBody>
                     {messages.map((msg, index) => (
