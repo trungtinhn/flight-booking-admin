@@ -8,6 +8,7 @@ import AirlinePage from "../modules/airlines/pages/AirlinePage";
 import PlanePage from "../modules/planes/pages/PlanePage";
 import AdminChatDashboard from "../modules/chat/pages/AdminChatDashboard";
 import VoucherPage from "../modules/vouchers/VoucherPage";
+import ChatWindow from "../components/ChatWindow";
 
 
 export default function useRouteElements() {

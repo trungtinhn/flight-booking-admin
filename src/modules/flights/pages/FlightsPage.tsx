@@ -69,6 +69,7 @@ const FlightsPage = () => {
   const [airports, setAirports] = useState([]);
 
   const delayFlight = async (id, departureDate, arrivalDate, reason) => {
+    console.log(id, departureDate, arrivalDate, reason);
     try {
       const response = await axios.post(
         "https://flightbookingbe-production.up.railway.app/flight/delay",
@@ -275,6 +276,7 @@ const FlightsPage = () => {
           centered
           open={delayModalOpen}
           onOk={() => {
+
             delayFlight(
               delayFlightId,
               delayDepartureDate,
