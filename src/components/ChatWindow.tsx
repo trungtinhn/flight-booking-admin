@@ -6,7 +6,7 @@ import './ChatWindow.css'; // Importing the CSS file
 interface ChatWindowProps {
     selectedUser: User;
     messages: Message[];
-    onSendMessage: (message: Message) => void;
+    onSendMessage: (message: Omit<Message, 'id'>) => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ selectedUser, messages, onSendMessage }) => {
@@ -18,22 +18,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedUser, messages, onSendM
         // Initialize WebSocket service
         const wsService = new WebSocketService('ws://localhost:7050/ws');
         wsService.onMessage = (msg: Message) => {
-            setChatHistory(prevMessages => {
-                if (!prevMessages.some(m => m.id === msg.id)) {
-                    return [...prevMessages, msg];
-                }
-                return prevMessages;
-            });
+            console.log('WebSocket message received:', msg); // Debug log
+            if ((msg.receiverId === selectedUser.id.toString() || msg.senderId === selectedUser.id.toString()) && !chatHistory.some(m => m.createdAt === msg.createdAt && m.message === msg.message)) {
+                setChatHistory(prevMessages => [...prevMessages, msg]);
+            }
         };
         setWebSocketService(wsService);
 
         return () => {
             wsService.close();
         };
-    }, []);
+    }, [selectedUser, chatHistory]);
 
     useEffect(() => {
-        // Fetch chat history when the selected user changes
+        // Fetch chat history for the selected user
         if (selectedUser) {
             fetchChatHistory(selectedUser.id.toString());
         }
@@ -47,16 +45,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedUser, messages, onSendM
 
     const handleSendMessage = () => {
         if (newMessage.trim()) {
-            const message: Message = {
-                id: Date.now(), // Assign a temporary id until backend provides the real one
+            const message: Omit<Message, 'id'> = {
                 senderId: '1', // Admin ID is always 1
                 receiverId: selectedUser.id.toString(), // Convert to string
                 message: newMessage.trim(),
                 createdAt: new Date().toISOString()
             };
+            console.log('Sending message:', message); // Debug log
             onSendMessage(message);
             setNewMessage('');
-            setChatHistory(prevMessages => [...prevMessages, message]);
+            // Add message to chat history with a temporary flag
+            setChatHistory(prevMessages => [...prevMessages, { ...message, id: Date.now() }]);
         }
     };
 
@@ -67,7 +66,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ selectedUser, messages, onSendM
                 <div>{selectedUser.fullName}</div>
             </div>
             <div className="chat-messages">
-                {chatHistory.concat(messages).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg) => (
+                {chatHistory.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg) => (
                     <div key={msg.id} className={`chat-message ${msg.senderId === '1' ? 'chat-message-sent' : 'chat-message-received'}`}>
                         <div className="message-content">
                             {msg.message}
