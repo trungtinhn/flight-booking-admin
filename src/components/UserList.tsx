@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, getUsers } from '../services/api';
+import { WebSocketService, Message } from '../services/WebSocketService';
 import './UserList.css'; // Importing the CSS file
 
 interface UserListProps {
@@ -9,9 +10,22 @@ interface UserListProps {
 
 const UserList: React.FC<UserListProps> = ({ selectedUser, onSelectUser }) => {
     const [users, setUsers] = useState<User[]>([]);
+    const [webSocketService, setWebSocketService] = useState<WebSocketService | null>(null);
 
     useEffect(() => {
         fetchUsers();
+
+        // Initialize WebSocket service
+        const wsService = new WebSocketService('ws://localhost:7050/ws');
+        wsService.onMessage = (msg: Message) => {
+            console.log('WebSocket message received:', msg); // Debug log
+            fetchUsers();
+        };
+        setWebSocketService(wsService);
+
+        return () => {
+            wsService.close();
+        };
     }, []);
 
     const fetchUsers = async () => {
