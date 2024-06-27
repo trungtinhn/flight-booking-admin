@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from '../services/api';
+import './UserList.css'; // Importing the CSS file
 
 interface UserListProps {
     users: User[];
@@ -9,17 +10,20 @@ interface UserListProps {
 
 const UserList: React.FC<UserListProps> = ({ users, selectedUser, onSelectUser }) => {
     return (
-        <div className="w-1/4 bg-gray-100 p-4">
-            <h1 className="text-xl font-bold">Support Customer</h1>
+        <div className="user-list">
+            <h1 className="user-list-title">Support Customer</h1>
             <ul>
                 {users.map((user) => (
                     <li
                         key={user.id}
-                        className={`p-2 cursor-pointer ${selectedUser?.id === user.id ? 'bg-blue-500 text-white' : ''}`}
+                        className={`user-item ${selectedUser?.id === user.id ? 'user-item-selected' : ''}`}
                         onClick={() => onSelectUser(user)}
                     >
-                        <div>{user.name}</div>
-                        <div className="text-sm text-gray-600">New message</div>
+                        <img src={user.avatarUrl} alt="Avatar" className="user-avatar" />
+                        <div>
+                            <div className="user-name">{user.fullName}</div>
+                            <div className="user-status">New message</div>
+                        </div>
                     </li>
                 ))}
             </ul>

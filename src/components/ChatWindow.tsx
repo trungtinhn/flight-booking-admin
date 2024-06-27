@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Message } from '../services/WebSocketService';
+import React, { useState, useEffect } from 'react';
+import { Message, WebSocketService } from '../services/WebSocketService';
 import { User } from '../services/api';
+import './ChatWindow.css'; // Importing the CSS file
 
 interface ChatWindowProps {
     selectedUser: User;
@@ -10,43 +11,83 @@ interface ChatWindowProps {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ selectedUser, messages, onSendMessage }) => {
     const [newMessage, setNewMessage] = useState('');
+    const [chatHistory, setChatHistory] = useState<Message[]>([]);
+    const [webSocketService, setWebSocketService] = useState<WebSocketService | null>(null);
+
+    useEffect(() => {
+        // Initialize WebSocket service
+        const wsService = new WebSocketService('ws://localhost:7050/ws');
+        wsService.onMessage = (msg: Message) => {
+            setChatHistory(prevMessages => {
+                if (!prevMessages.some(m => m.id === msg.id)) {
+                    return [...prevMessages, msg];
+                }
+                return prevMessages;
+            });
+        };
+        setWebSocketService(wsService);
+
+        return () => {
+            wsService.close();
+        };
+    }, []);
+
+    useEffect(() => {
+        // Fetch chat history when the selected user changes
+        if (selectedUser) {
+            fetchChatHistory(selectedUser.id.toString());
+        }
+    }, [selectedUser]);
+
+    const fetchChatHistory = async (userId: string) => {
+        const response = await fetch(`http://localhost:7050/api/messages/history/1/${userId}`);
+        const data: Message[] = await response.json();
+        setChatHistory(data);
+    };
 
     const handleSendMessage = () => {
         if (newMessage.trim()) {
-            const message = {
-                userId: selectedUser.id,
+            const message: Message = {
+                id: Date.now(), // Assign a temporary id until backend provides the real one
+                senderId: '1', // Admin ID is always 1
+                receiverId: selectedUser.id.toString(), // Convert to string
                 message: newMessage.trim(),
+                createdAt: new Date().toISOString()
             };
             onSendMessage(message);
             setNewMessage('');
+            setChatHistory(prevMessages => [...prevMessages, message]);
         }
     };
 
     return (
-        <div className="w-3/4 bg-gray-50 p-4 flex flex-col">
-            <div className="bg-blue-100 p-4 mb-4 flex items-center">
-                <div className="bg-gray-300 rounded-full w-16 h-16 mr-4"></div>
-                <div>{selectedUser.name}</div>
+        <div className="chat-window">
+            <div className="chat-header">
+                <img src={selectedUser.avatarUrl} alt="Avatar" className="chat-avatar" />
+                <div>{selectedUser.fullName}</div>
             </div>
-            <div className="flex-1 bg-gray-200 p-4 mb-4 overflow-y-auto">
-                {messages.map((msg, index) => (
-                    <div key={index} className={`mb-2 ${msg.userId === selectedUser.id ? 'text-right' : 'text-left'}`}>
-                        <div className={`inline-block p-2 rounded ${msg.userId === selectedUser.id ? 'bg-blue-500 text-white' : 'bg-gray-300'}`}>
+            <div className="chat-messages">
+                {chatHistory.concat(messages).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).map((msg) => (
+                    <div key={msg.id} className={`chat-message ${msg.senderId === '1' ? 'chat-message-sent' : 'chat-message-received'}`}>
+                        <div className="message-content">
                             {msg.message}
+                        </div>
+                        <div className="message-time">
+                            {new Date(msg.createdAt).toLocaleTimeString()}
                         </div>
                     </div>
                 ))}
             </div>
-            <div className="flex items-center p-4 bg-white border-t">
+            <div className="chat-input">
                 <input
                     type="text"
-                    className="flex-1 border border-gray-300 rounded p-2"
+                    className="input-field"
                     placeholder="Send message here"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                 />
-                <button className="ml-4 bg-blue-500 text-white p-2 rounded" onClick={handleSendMessage}>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <button className="send-button" onClick={handleSendMessage}>
+                    <svg className="send-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                 </button>

@@ -1,5 +1,8 @@
 export interface Message {
-    userId: number;
+    id: number;
+    createdAt: string | number | Date;
+    senderId: string;
+    receiverId: string;
     message: string;
 }
 
