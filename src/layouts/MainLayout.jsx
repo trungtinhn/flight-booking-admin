@@ -1,7 +1,8 @@
 import { Flex, Layout, Menu, theme } from "antd";
 import Sider from "antd/es/layout/Sider";
 import { Content } from "antd/es/layout/layout";
-
+import { CiAirportSign1 } from "react-icons/ci";
+import { MdAirlines } from "react-icons/md";
 import "./MainLayout.css";
 import ChatIcon from "../assets/icons/ChatIcon";
 import DashboardIcon from "../assets/icons/DashboardIcon";
@@ -19,12 +20,12 @@ const items = [
   },
   {
     key: "2",
-    icon: <FlightIcon />,
+    icon: <MdAirlines style={{ fontSize: "1.5rem" }} />,
     label: <Link to="/airlines">Airline Management</Link>,
   },
   {
     key: "3",
-    icon: <FlightIcon />,
+    icon: <CiAirportSign1 style={{ fontSize: "1.5rem" }} />,
     label: <Link to="/planes">Planes Management</Link>,
   },
   {

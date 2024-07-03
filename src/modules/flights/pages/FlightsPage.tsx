@@ -262,10 +262,10 @@ const FlightsPage = () => {
                 </Select>
               </Form.Item>
               <Form.Item label="Status">
-                <Select>
-                  <Select.Option value="scheduled">SCHEDULED</Select.Option>
-                  <Select.Option value="cancelled"> CANCELLED</Select.Option>
-                  <Select.Option value="delay">DELAYED</Select.Option>
+                <Select onChange={(value) => setFlightStatus(value)}>
+                  <Select.Option value="SCHEDULED">SCHEDULED</Select.Option>
+                  <Select.Option value="CANCELLED"> CANCELLED</Select.Option>
+                  <Select.Option value="DELAY">DELAYED</Select.Option>
                 </Select>
               </Form.Item>
             </Form>
